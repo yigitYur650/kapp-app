@@ -1,14 +1,11 @@
 // lib/main.dart
-//
-// Kap-App giriş noktası.
-// Provider DI, lokalizasyon ve tema burada wiring edilir.
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as m;
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'core/localization/app_localizations.dart';
-import 'core/theme/app_theme.dart';
 import 'features/product/providers/product_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 
@@ -16,27 +13,28 @@ void main() {
   runApp(const KappApp());
 }
 
-class KappApp extends StatelessWidget {
+class KappApp extends m.StatelessWidget {
   const KappApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  m.Widget build(m.BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ProductProvider()),
       ],
-      child: MaterialApp(
+      // MaterialApp YERİNE ShadcnApp KULLANIYORUZ
+      child: ShadcnApp(
         title: 'Kap-App',
         debugShowCheckedModeBanner: false,
-
-        // ── Tema ────────────────────────────────────────────────────────────
-        theme: AppTheme.lightTheme(),
-        darkTheme: AppTheme.darkTheme(),
-        themeMode: ThemeMode.dark, // varsayılan koyu tema
+        
+        // Shadcn Özel Teması
+        theme: ThemeData(
+          colorScheme: ColorSchemes.darkZinc, 
+        ),
 
         // ── Lokalizasyon ─────────────────────────────────────────────────────
-        locale: const Locale('tr'),
-        supportedLocales: const [Locale('tr'), Locale('en')],
+        locale: const m.Locale('tr'),
+        supportedLocales: const [m.Locale('tr'), m.Locale('en')],
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
