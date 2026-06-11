@@ -307,12 +307,11 @@ packages:
   shadcn_flutter:
     dependency: "direct main"
     description:
-      path: "."
-      ref: master
-      resolved-ref: c91d8781426c2cd05889a6a1e8fd635269c52db5
-      url: "https://github.com/sunarya-thito/shadcn_flutter.git"
-    source: git
-    version: "0.0.53"
+      name: shadcn_flutter
+      sha256: b04e2f790e182007d02b78234c647df393f2ea95b39d8da88d7cbdaed56f7701
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.52"
   shimmer:
     dependency: "direct main"
     description:
@@ -394,10 +393,10 @@ packages:
     dependency: "direct overridden"
     description:
       name: vector_math
-      sha256: "1d774bbdf6b72a0b12122fc1560c9c2d2a67db5a4a4cc2bd8a5c990ab20e3188"
+      sha256: "47a1b32ee755c3fcffa33db52a7258c137f97bdb2209a1075be847809fac4ccf"
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.0"
+    version: "2.3.0"
   vm_service:
     dependency: transitive
     description:
