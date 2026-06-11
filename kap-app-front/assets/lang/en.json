@@ -44,7 +44,10 @@
     "create_home_desc": "Set up a new group for your family or roommates.",
     "join_home_desc": "Enter the invite code to join an existing home.",
     "create_button": "Create",
-    "join_button": "Join"
+    "join_button": "Join",
+    "dashboard_family_name": "Yur Family",
+    "dashboard_list_summary": "🛒 There are 5 items waiting in the list",
+    "dashboard_go_to_list": "Go to List ->"
   },
   "product": {
     "shopping_list": "Shopping List",

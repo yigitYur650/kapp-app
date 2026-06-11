@@ -44,7 +44,10 @@
     "create_home_desc": "Aileniz veya ev arkadaşlarınız için yeni bir grup kurun.",
     "join_home_desc": "Var olan bir eve katılmak için davet kodunu girin.",
     "create_button": "Oluştur",
-    "join_button": "Katıl"
+    "join_button": "Katıl",
+    "dashboard_family_name": "Yur Ailesi",
+    "dashboard_list_summary": "🛒 Listede alınmayı bekleyen 5 ürün var",
+    "dashboard_go_to_list": "Listeye Git ->"
   },
   "product": {
     "shopping_list": "Alışveriş Listesi",
