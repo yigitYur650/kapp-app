@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'features/product/providers/product_provider.dart';
-import 'features/home/presentation/screens/main_layout.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
 
 void main() {
   runApp(const KappApp());
@@ -45,7 +45,7 @@ class KappApp extends StatelessWidget {
         ],
 
         // ── Ana Ekran ─────────────────────────────────────────────────────────
-        home: const MainLayout(),
+        home: const LoginScreen(),
       ),
     );
   }
