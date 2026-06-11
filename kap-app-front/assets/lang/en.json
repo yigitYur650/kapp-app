@@ -1,0 +1,98 @@
+{
+  "app_name": "Kap-App",
+  "tagline": "Family shopping, together made easy",
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "empty": "Nothing here yet",
+    "search": "Search...",
+    "confirm": "Confirm",
+    "back": "Back"
+  },
+  "auth": {
+    "login": "Log In",
+    "logout": "Log Out",
+    "register": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "email_hint": "example@email.com",
+    "password_hint": "Enter your password",
+    "forgot_password": "Forgot password?",
+    "no_account": "Don't have an account?",
+    "have_account": "Already have an account?",
+    "login_error": "Invalid email or password",
+    "register_success": "Registration successful! Please verify your email."
+  },
+  "tenant": {
+    "family": "Family",
+    "home": "Home",
+    "create_home": "Create Home",
+    "join_home": "Join Home",
+    "home_name": "Home Name",
+    "home_code": "Invite Code",
+    "members": "Members",
+    "invite": "Invite",
+    "invite_copied": "Invite code copied",
+    "leave_home": "Leave Home",
+    "no_home": "You haven't joined a home yet"
+  },
+  "product": {
+    "shopping_list": "Shopping List",
+    "add_item": "Add Item",
+    "item_name": "Item name",
+    "quantity": "Quantity",
+    "unit": "Unit",
+    "category": "Category",
+    "mark_done": "Mark as purchased",
+    "mark_undone": "Unmark",
+    "delete_item": "Delete item",
+    "item_added": "Item added",
+    "item_deleted": "Item deleted",
+    "list_empty": "Your shopping list is empty",
+    "categories": {
+      "produce": "Produce",
+      "dairy": "Dairy",
+      "meat": "Meat & Poultry",
+      "bakery": "Bread & Bakery",
+      "beverages": "Beverages",
+      "cleaning": "Cleaning",
+      "personal": "Personal Care",
+      "other": "Other"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "theme_system": "System",
+    "notifications": "Notifications",
+    "about": "About",
+    "version": "Version"
+  },
+  "nav": {
+    "hub": "My Home",
+    "list": "List",
+    "settings": "Settings"
+  },
+  "add_product": {
+    "title": "Add Item",
+    "name_label": "Item Name",
+    "name_hint": "e.g. Milk, Bread...",
+    "qty_label": "Quantity",
+    "unit_label": "Unit",
+    "unit_hint": "pcs, kg, lt...",
+    "category_label": "Category",
+    "needs": "Needs",
+    "got": "Got",
+    "empty_needs": "All items purchased 🎉",
+    "empty_got": "Nothing purchased yet"
+  }
+}
