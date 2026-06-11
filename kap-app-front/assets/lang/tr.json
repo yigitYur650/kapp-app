@@ -40,7 +40,11 @@
     "invite": "Davet Et",
     "invite_copied": "Davet kodu kopyalandı",
     "leave_home": "Evden Ayrıl",
-    "no_home": "Henüz bir eve katılmadınız"
+    "no_home": "Henüz bir eve katılmadınız",
+    "create_home_desc": "Aileniz veya ev arkadaşlarınız için yeni bir grup kurun.",
+    "join_home_desc": "Var olan bir eve katılmak için davet kodunu girin.",
+    "create_button": "Oluştur",
+    "join_button": "Katıl"
   },
   "product": {
     "shopping_list": "Alışveriş Listesi",

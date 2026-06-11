@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart' as m;
 import 'package:shadcn_flutter/shadcn_flutter.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart' as loc;
 import 'package:provider/provider.dart';
 
 import 'core/localization/app_localizations.dart';
@@ -37,9 +37,9 @@ class KappApp extends m.StatelessWidget {
         supportedLocales: const [m.Locale('tr'), m.Locale('en')],
         localizationsDelegates: const [
           AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
+          loc.GlobalMaterialLocalizations.delegate,
+          loc.GlobalWidgetsLocalizations.delegate,
+          loc.GlobalCupertinoLocalizations.delegate,
         ],
 
         // ── Ana Ekran ─────────────────────────────────────────────────────────
@@ -48,3 +48,4 @@ class KappApp extends m.StatelessWidget {
     );
   }
 }
+

@@ -40,7 +40,11 @@
     "invite": "Invite",
     "invite_copied": "Invite code copied",
     "leave_home": "Leave Home",
-    "no_home": "You haven't joined a home yet"
+    "no_home": "You haven't joined a home yet",
+    "create_home_desc": "Set up a new group for your family or roommates.",
+    "join_home_desc": "Enter the invite code to join an existing home.",
+    "create_button": "Create",
+    "join_button": "Join"
   },
   "product": {
     "shopping_list": "Shopping List",
