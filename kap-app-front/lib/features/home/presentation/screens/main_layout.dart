@@ -332,171 +332,168 @@ class _AddProductSheetState extends State<_AddProductSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.bgSheet,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Handle
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppTheme.bgSheet,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(20, 14, 20, 20 + MediaQuery.of(context).viewInsets.bottom),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppTheme.borderDefault,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Başlık + kırmızı çizgi
+                Row(
+                  children: [
+                    Container(width: 3, height: 20,
                       decoration: BoxDecoration(
-                        color: AppTheme.borderDefault,
+                        color: AppTheme.netflixRed,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Ürün Ekle',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
 
-                  // Başlık + kırmızı çizgi
-                  Row(
-                    children: [
-                      Container(width: 3, height: 20,
+                // Ürün Adı
+                _SheetLabel('ÜRÜN ADI'),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _nameCtrl,
+                  autofocus: true,
+                  style: const TextStyle(color: AppTheme.textPrimary),
+                  decoration: const InputDecoration(hintText: 'örn. Süt, Ekmek...'),
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Ürün adı zorunlu' : null,
+                ),
+                const SizedBox(height: 14),
+
+                // Miktar + Birim
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _SheetLabel('MİKTAR'),
+                          const SizedBox(height: 6),
+                          TextFormField(
+                            controller: _qtyCtrl,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(color: AppTheme.textPrimary),
+                            decoration: const InputDecoration(hintText: '1'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _SheetLabel('BİRİM'),
+                          const SizedBox(height: 6),
+                          TextFormField(
+                            controller: _unitCtrl,
+                            style: const TextStyle(color: AppTheme.textPrimary),
+                            decoration: const InputDecoration(hintText: 'adet, kg, lt...'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // Kategori
+                _SheetLabel('KATEGORİ'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _categories.map((cat) {
+                    final isSelected = _selectedCategory == cat.$1;
+                    return GestureDetector(
+                      onTap: () => setState(() =>
+                          _selectedCategory = isSelected ? null : cat.$1),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppTheme.netflixRed,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Ürün Ekle',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Ürün Adı
-                  _SheetLabel('ÜRÜN ADI'),
-                  const SizedBox(height: 6),
-                  TextFormField(
-                    controller: _nameCtrl,
-                    autofocus: true,
-                    style: const TextStyle(color: AppTheme.textPrimary),
-                    decoration: const InputDecoration(hintText: 'örn. Süt, Ekmek...'),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Ürün adı zorunlu' : null,
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Miktar + Birim
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _SheetLabel('MİKTAR'),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _qtyCtrl,
-                              keyboardType: TextInputType.number,
-                              style: const TextStyle(color: AppTheme.textPrimary),
-                              decoration: const InputDecoration(hintText: '1'),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _SheetLabel('BİRİM'),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _unitCtrl,
-                              style: const TextStyle(color: AppTheme.textPrimary),
-                              decoration: const InputDecoration(hintText: 'adet, kg, lt...'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Kategori
-                  _SheetLabel('KATEGORİ'),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _categories.map((cat) {
-                      final isSelected = _selectedCategory == cat.$1;
-                      return GestureDetector(
-                        onTap: () => setState(() =>
-                            _selectedCategory = isSelected ? null : cat.$1),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppTheme.netflixRed
+                              : AppTheme.bgElevated,
+                          border: Border.all(
                             color: isSelected
                                 ? AppTheme.netflixRed
-                                : AppTheme.bgElevated,
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppTheme.netflixRed
-                                  : AppTheme.borderDefault,
-                            ),
-                            borderRadius: BorderRadius.circular(6),
+                                : AppTheme.borderDefault,
                           ),
-                          child: Text(
-                            cat.$2,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isSelected
-                                  ? Colors.white
-                                  : AppTheme.textSecondary,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                            ),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          cat.$2,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isSelected
+                                ? Colors.white
+                                : AppTheme.textSecondary,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 22),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 22),
 
-                  // Kaydet
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: _isSaving
-                        ? const Center(
-                            child: CircularProgressIndicator(
-                              color: AppTheme.netflixRed,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : ElevatedButton(
-                            onPressed: _save,
-                            child: const Text('Listeye Ekle'),
+                // Kaydet
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: _isSaving
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.netflixRed,
+                            strokeWidth: 2.5,
                           ),
-                  ),
-                ],
-              ),
+                        )
+                      : ElevatedButton(
+                          onPressed: _save,
+                          child: const Text('Listeye Ekle'),
+                        ),
+                ),
+              ],
             ),
           ),
         ),
