@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'core/localization/app_localizations.dart';
 import 'features/product/providers/product_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/settings/presentation/screens/settings_screen.dart';
 
 void main() {
   runApp(const KappApp());
@@ -22,28 +23,32 @@ class KappApp extends m.StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ProductProvider()),
       ],
-      // MaterialApp YERİNE ShadcnApp KULLANIYORUZ
-      child: ShadcnApp(
-        title: 'Kap-App',
-        debugShowCheckedModeBanner: false,
-        
-        // Shadcn Özel Teması
-        theme: ThemeData(
-          colorScheme: ColorSchemes.darkZinc, 
-        ),
+      child: m.ValueListenableBuilder<String>(
+        valueListenable: globalSelectedLang,
+        builder: (context, lang, child) {
+          return ShadcnApp(
+            title: 'Kap-App',
+            debugShowCheckedModeBanner: false,
+            
+            // Shadcn Özel Teması
+            theme: ThemeData(
+              colorScheme: ColorSchemes.darkZinc, 
+            ),
 
-        // ── Lokalizasyon ─────────────────────────────────────────────────────
-        locale: const m.Locale('tr'),
-        supportedLocales: const [m.Locale('tr'), m.Locale('en')],
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          loc.GlobalMaterialLocalizations.delegate,
-          loc.GlobalWidgetsLocalizations.delegate,
-          loc.GlobalCupertinoLocalizations.delegate,
-        ],
+            // ── Lokalizasyon ─────────────────────────────────────────────────────
+            locale: m.Locale(lang),
+            supportedLocales: const [m.Locale('tr'), m.Locale('en')],
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              loc.GlobalMaterialLocalizations.delegate,
+              loc.GlobalWidgetsLocalizations.delegate,
+              loc.GlobalCupertinoLocalizations.delegate,
+            ],
 
-        // ── Ana Ekran ─────────────────────────────────────────────────────────
-        home: const LoginScreen(),
+            // ── Ana Ekran ─────────────────────────────────────────────────────────
+            home: const LoginScreen(),
+          );
+        },
       ),
     );
   }

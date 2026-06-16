@@ -82,7 +82,17 @@
     "theme_system": "System",
     "notifications": "Notifications",
     "about": "About",
-    "version": "Version"
+    "version": "Version",
+    "appearance_and_theme": "Appearance & Theme",
+    "font_size": "Font Size",
+    "color_customization": "Color Customization",
+    "color_note": "Note: Take a screenshot (SS) of your favorite color combination and send it to us!",
+    "app_version_label": "App Version",
+    "build_number_label": "Build Number",
+    "release_date_label": "Release Date",
+    "release_date_value": "June 2026",
+    "send_feedback": "Send Feedback",
+    "follow_github": "Follow on GitHub"
   },
   "nav": {
     "hub": "My Home",

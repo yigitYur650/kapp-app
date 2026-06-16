@@ -82,7 +82,17 @@
     "theme_system": "Sistem",
     "notifications": "Bildirimler",
     "about": "Hakkında",
-    "version": "Versiyon"
+    "version": "Versiyon",
+    "appearance_and_theme": "Görünüm & Tema",
+    "font_size": "Yazı Boyutu",
+    "color_customization": "Renk Özelleştirme",
+    "color_note": "Not: En beğendiğiniz renk kombinasyonunun ekran görüntüsünü (SS) alıp bize gönderin!",
+    "app_version_label": "Uygulama Sürümü",
+    "build_number_label": "Build Numarası",
+    "release_date_label": "Çıkış Tarihi",
+    "release_date_value": "Haziran 2026",
+    "send_feedback": "Bize Feedback Gönder",
+    "follow_github": "GitHub'da Takip Et"
   },
   "nav": {
     "hub": "Evim",

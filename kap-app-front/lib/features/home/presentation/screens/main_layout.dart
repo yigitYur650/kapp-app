@@ -13,6 +13,7 @@ import '../../../product/providers/product_provider.dart';
 import 'hub_screen.dart';
 import '../../../product/presentation/screens/shopping_list_screen.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -63,39 +64,44 @@ class _MainLayoutState extends State<MainLayout> {
     setState(() => _currentIndex = index);
   }
 
-  void _openAddProductSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _AddProductSheet(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+
+    // Update nav items using translation keys
+    final translatedNavItems = [
+      _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: l.t('nav.hub') ?? 'Evim'),
+      _NavItem(icon: Icons.list_alt_outlined, activeIcon: Icons.list_alt_rounded, label: l.t('nav.list') ?? 'Liste'),
+      _NavItem(icon: Icons.settings_outlined, activeIcon: Icons.settings_rounded, label: l.t('nav.settings') ?? 'Ayarlar'),
+    ];
+
     return Scaffold(
       backgroundColor: AppTheme.bgBlack,
       extendBody: true,
       body: PageView(
         controller: _pageController,
         onPageChanged: _onPageChanged,
-        // Liste sekmesindeyken yatay kaydırma yönetimini ShoppingListScreen üstlenir.
-        // NeverScrollableScrollPhysics yerine CustomScrollPhysics kullanmıyoruz;
-        // bunun yerine ShoppingListScreen kendi iç PageView'unda scroll çakışmasını
-        // önlemek için NeverScrollableScrollPhysics + manual drag kullanır.
         physics: const BouncingScrollPhysics(),
         children: _pages,
       ),
-
-      floatingActionButton: _PersistentFab(onPressed: _openAddProductSheet),
+      floatingActionButton: _PersistentFab(
+        onPressed: () => _openAddProductSheet(context),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
       bottomNavigationBar: _BottomNavBar(
         currentIndex: _currentIndex,
-        items: _navItems,
+        items: translatedNavItems,
         onTap: _onNavTap,
       ),
+    );
+  }
+
+  void _openAddProductSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _AddProductSheet(),
     );
   }
 }
@@ -332,6 +338,18 @@ class _AddProductSheetState extends State<_AddProductSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final localizedCategories = [
+      ('produce',   '🥦 ${l.t('product.categories.produce') ?? 'Sebze & Meyve'}'),
+      ('dairy',     '🥛 ${l.t('product.categories.dairy') ?? 'Süt Ürünleri'}'),
+      ('meat',      '🥩 ${l.t('product.categories.meat') ?? 'Et & Tavuk'}'),
+      ('bakery',    '🍞 ${l.t('product.categories.bakery') ?? 'Ekmek & Fırın'}'),
+      ('beverages', '🧃 ${l.t('product.categories.beverages') ?? 'İçecekler'}'),
+      ('cleaning',  '🧹 ${l.t('product.categories.cleaning') ?? 'Temizlik'}'),
+      ('personal',  '🧴 ${l.t('product.categories.personal') ?? 'Kişisel Bakım'}'),
+      ('other',     '📦 ${l.t('product.categories.other') ?? 'Diğer'}'),
+    ];
+
     return Container(
       decoration: const BoxDecoration(
         color: AppTheme.bgSheet,
@@ -369,9 +387,9 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Text(
-                      'Ürün Ekle',
-                      style: TextStyle(
+                    Text(
+                      l.t('add_product.title') ?? 'Ürün Ekle',
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.textPrimary,
@@ -382,15 +400,15 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                 const SizedBox(height: 18),
 
                 // Ürün Adı
-                _SheetLabel('ÜRÜN ADI'),
+                _SheetLabel((l.t('add_product.name_label') ?? 'ÜRÜN ADI').toUpperCase()),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _nameCtrl,
                   autofocus: true,
                   style: const TextStyle(color: AppTheme.textPrimary),
-                  decoration: const InputDecoration(hintText: 'örn. Süt, Ekmek...'),
+                  decoration: InputDecoration(hintText: l.t('add_product.name_hint') ?? 'örn. Süt, Ekmek...'),
                   validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Ürün adı zorunlu' : null,
+                      (v == null || v.trim().isEmpty) ? l.t('common.error') ?? 'Zorunlu alan' : null,
                 ),
                 const SizedBox(height: 14),
 
@@ -402,7 +420,7 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _SheetLabel('MİKTAR'),
+                          _SheetLabel((l.t('add_product.qty_label') ?? 'MİKTAR').toUpperCase()),
                           const SizedBox(height: 6),
                           TextFormField(
                             controller: _qtyCtrl,
@@ -419,12 +437,12 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _SheetLabel('BİRİM'),
+                          _SheetLabel((l.t('add_product.unit_label') ?? 'BİRİM').toUpperCase()),
                           const SizedBox(height: 6),
                           TextFormField(
                             controller: _unitCtrl,
                             style: const TextStyle(color: AppTheme.textPrimary),
-                            decoration: const InputDecoration(hintText: 'adet, kg, lt...'),
+                            decoration: InputDecoration(hintText: l.t('add_product.unit_hint') ?? 'adet, kg, lt...'),
                           ),
                         ],
                       ),
@@ -434,12 +452,12 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                 const SizedBox(height: 14),
 
                 // Kategori
-                _SheetLabel('KATEGORİ'),
+                _SheetLabel((l.t('add_product.category_label') ?? 'KATEGORİ').toUpperCase()),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: _categories.map((cat) {
+                  children: localizedCategories.map((cat) {
                     final isSelected = _selectedCategory == cat.$1;
                     return GestureDetector(
                       onTap: () => setState(() =>
@@ -490,7 +508,7 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                         )
                       : ElevatedButton(
                           onPressed: _save,
-                          child: const Text('Listeye Ekle'),
+                          child: Text(l.t('product.add_item') ?? 'Listeye Ekle'),
                         ),
                 ),
               ],

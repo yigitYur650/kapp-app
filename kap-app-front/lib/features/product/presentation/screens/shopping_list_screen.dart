@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../domain/product_model.dart';
 import '../../providers/product_provider.dart';
 
@@ -115,11 +116,12 @@ class _ShoppingAppBar extends StatelessWidget {
               child: Consumer<ProductProvider>(
                 builder: (context, provider, _) {
                   final total = provider.needs.length + provider.got.length;
+                  final l = AppLocalizations.of(context);
                   return Row(
                     children: [
-                      const Text(
-                        'Alışveriş Listesi',
-                        style: TextStyle(
+                      Text(
+                        l.t('product.shopping_list') ?? 'Alışveriş Listesi',
+                        style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.textPrimary,
@@ -165,8 +167,8 @@ class _ShoppingAppBar extends StatelessWidget {
               ),
               dividerColor: AppTheme.borderDefault,
               tabs: [
-                _CountedTab(label: 'Alınacaklar', getter: (p) => p.needs.length),
-                _CountedTab(label: 'Alınanlar',   getter: (p) => p.got.length),
+                _CountedTab(label: AppLocalizations.of(context).t('add_product.needs') ?? 'Alınacaklar', getter: (p) => p.needs.length),
+                _CountedTab(label: AppLocalizations.of(context).t('add_product.got') ?? 'Alınanlar',   getter: (p) => p.got.length),
               ],
             ),
           ],
@@ -220,9 +222,10 @@ class _NeedsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (provider.needs.isEmpty) {
-      return const _EmptyView(
+      final l = AppLocalizations.of(context);
+      return _EmptyView(
         icon: Icons.celebration_outlined,
-        message: 'Tüm ürünler sepete alındı 🎉',
+        message: l.t('add_product.empty_needs') ?? 'Tüm ürünler sepete alındı 🎉',
       );
     }
     return _AnimatedItemList(items: provider.needs, provider: provider);
@@ -236,9 +239,10 @@ class _GotTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (provider.got.isEmpty) {
-      return const _EmptyView(
+      final l = AppLocalizations.of(context);
+      return _EmptyView(
         icon: Icons.shopping_cart_outlined,
-        message: 'Henüz alınan ürün yok',
+        message: l.t('add_product.empty_got') ?? 'Henüz alınan ürün yok',
       );
     }
     return _AnimatedItemList(items: provider.got, provider: provider);
@@ -339,14 +343,15 @@ class _AnimatedProductCardState extends State<AnimatedProductCard>
   }
 
   void _confirmDelete() {
+    final l = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: const Text(
-          'Ürünü Sil',
-          style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700),
+        title: Text(
+          l.t('product.delete_item') ?? 'Ürünü Sil',
+          style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700),
         ),
         content: Text(
           '"${widget.product.name}" listeden kaldırılsın mı?',
@@ -355,9 +360,9 @@ class _AnimatedProductCardState extends State<AnimatedProductCard>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'İptal',
-              style: TextStyle(color: AppTheme.textSecondary),
+            child: Text(
+              l.t('common.cancel') ?? 'İptal',
+              style: const TextStyle(color: AppTheme.textSecondary),
             ),
           ),
           TextButton(
@@ -365,8 +370,8 @@ class _AnimatedProductCardState extends State<AnimatedProductCard>
               Navigator.pop(ctx);
               widget.provider.deleteItem(widget.product.id);
             },
-            child: const Text(
-              'Sil',
+            child: Text(
+              l.t('common.delete') ?? 'Sil',
               style: TextStyle(
                 color: AppTheme.netflixRed,
                 fontWeight: FontWeight.w700,
@@ -530,12 +535,12 @@ class _ActionMenu extends StatelessWidget {
           value: _Action.edit,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Row(
-            children: const [
-              Icon(Icons.edit_outlined, size: 16, color: AppTheme.textSecondary),
-              SizedBox(width: 10),
+            children: [
+              const Icon(Icons.edit_outlined, size: 16, color: AppTheme.textSecondary),
+              const SizedBox(width: 10),
               Text(
-                'Düzenle',
-                style: TextStyle(
+                AppLocalizations.of(context).t('common.edit') ?? 'Düzenle',
+                style: const TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -549,12 +554,12 @@ class _ActionMenu extends StatelessWidget {
           value: _Action.delete,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Row(
-            children: const [
-              Icon(Icons.delete_outline_rounded, size: 16, color: AppTheme.netflixRed),
-              SizedBox(width: 10),
+            children: [
+              const Icon(Icons.delete_outline_rounded, size: 16, color: AppTheme.netflixRed),
+              const SizedBox(width: 10),
               Text(
-                'Sil',
-                style: TextStyle(
+                AppLocalizations.of(context).t('common.delete') ?? 'Sil',
+                style: const TextStyle(
                   color: AppTheme.netflixRed,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -607,20 +612,20 @@ class _CategoryBadge extends StatelessWidget {
   final String category;
   const _CategoryBadge({required this.category});
 
-  static const _labels = {
-    'produce':   ('🥦', 'Sebze'),
-    'dairy':     ('🥛', 'Süt'),
-    'meat':      ('🥩', 'Et'),
-    'bakery':    ('🍞', 'Fırın'),
-    'beverages': ('🧃', 'İçecek'),
-    'cleaning':  ('🧹', 'Temizlik'),
-    'personal':  ('🧴', 'Kişisel'),
-    'other':     ('📦', 'Diğer'),
-  };
-
   @override
   Widget build(BuildContext context) {
-    final info = _labels[category] ?? ('📦', category);
+    final l = AppLocalizations.of(context);
+    final localizedLabels = {
+      'produce':   ('🥦', l.t('product.categories.produce') ?? 'Sebze'),
+      'dairy':     ('🥛', l.t('product.categories.dairy') ?? 'Süt'),
+      'meat':      ('🥩', l.t('product.categories.meat') ?? 'Et'),
+      'bakery':    ('🍞', l.t('product.categories.bakery') ?? 'Fırın'),
+      'beverages': ('🧃', l.t('product.categories.beverages') ?? 'İçecek'),
+      'cleaning':  ('🧹', l.t('product.categories.cleaning') ?? 'Temizlik'),
+      'personal':  ('🧴', l.t('product.categories.personal') ?? 'Kişisel'),
+      'other':     ('📦', l.t('product.categories.other') ?? 'Diğer'),
+    };
+    final info = localizedLabels[category] ?? ('📦', category);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
@@ -784,16 +789,19 @@ class _EditProductSheetState extends State<_EditProductSheet> {
   String? _selectedCategory;
   bool _isSaving = false;
 
-  static const _categories = [
-    ('produce',   '🥦 Sebze & Meyve'),
-    ('dairy',     '🥛 Süt Ürünleri'),
-    ('meat',      '🥩 Et & Tavuk'),
-    ('bakery',    '🍞 Ekmek & Fırın'),
-    ('beverages', '🧃 İçecekler'),
-    ('cleaning',  '🧹 Temizlik'),
-    ('personal',  '🧴 Kişisel Bakım'),
-    ('other',     '📦 Diğer'),
-  ];
+  List<(String, String)> get _localizedCategories {
+    final l = AppLocalizations.of(context);
+    return [
+      ('produce',   '🥦 ${l.t('product.categories.produce') ?? 'Sebze & Meyve'}'),
+      ('dairy',     '🥛 ${l.t('product.categories.dairy') ?? 'Süt Ürünleri'}'),
+      ('meat',      '🥩 ${l.t('product.categories.meat') ?? 'Et & Tavuk'}'),
+      ('bakery',    '🍞 ${l.t('product.categories.bakery') ?? 'Ekmek & Fırın'}'),
+      ('beverages', '🧃 ${l.t('product.categories.beverages') ?? 'İçecekler'}'),
+      ('cleaning',  '🧹 ${l.t('product.categories.cleaning') ?? 'Temizlik'}'),
+      ('personal',  '🧴 ${l.t('product.categories.personal') ?? 'Kişisel Bakım'}'),
+      ('other',     '📦 ${l.t('product.categories.other') ?? 'Diğer'}'),
+    ];
+  }
 
   @override
   void initState() {
@@ -828,6 +836,7 @@ class _EditProductSheetState extends State<_EditProductSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
@@ -867,9 +876,9 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      const Text(
-                        'Ürünü Düzenle',
-                        style: TextStyle(
+                      Text(
+                        l.t('common.edit') ?? 'Ürünü Düzenle',
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textPrimary,
@@ -880,15 +889,15 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                   const SizedBox(height: 18),
 
                   // Ürün Adı
-                  _SheetLabel('ÜRÜN ADI'),
+                  _SheetLabel((l.t('add_product.name_label') ?? 'ÜRÜN ADI').toUpperCase()),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _nameCtrl,
                     autofocus: true,
                     style: const TextStyle(color: AppTheme.textPrimary),
-                    decoration: const InputDecoration(hintText: 'Ürün adı'),
+                    decoration: InputDecoration(hintText: l.t('add_product.name_hint') ?? 'Ürün adı'),
                     validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Zorunlu alan' : null,
+                        (v == null || v.trim().isEmpty) ? l.t('common.error') ?? 'Zorunlu alan' : null,
                   ),
                   const SizedBox(height: 14),
 
@@ -900,7 +909,7 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _SheetLabel('MİKTAR'),
+                            _SheetLabel((l.t('add_product.qty_label') ?? 'MİKTAR').toUpperCase()),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: _qtyCtrl,
@@ -917,12 +926,12 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _SheetLabel('BİRİM'),
+                            _SheetLabel((l.t('add_product.unit_label') ?? 'BİRİM').toUpperCase()),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: _unitCtrl,
                               style: const TextStyle(color: AppTheme.textPrimary),
-                              decoration: const InputDecoration(hintText: 'adet, kg, lt...'),
+                              decoration: InputDecoration(hintText: l.t('add_product.unit_hint') ?? 'adet, kg, lt...'),
                             ),
                           ],
                         ),
@@ -932,12 +941,12 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                   const SizedBox(height: 14),
 
                   // Kategori
-                  _SheetLabel('KATEGORİ'),
+                  _SheetLabel((l.t('add_product.category_label') ?? 'KATEGORİ').toUpperCase()),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _categories.map((cat) {
+                    children: _localizedCategories.map((cat) {
                       final isSelected = _selectedCategory == cat.$1;
                       return GestureDetector(
                         onTap: () => setState(() =>
@@ -988,7 +997,7 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                           )
                         : ElevatedButton(
                             onPressed: _save,
-                            child: const Text('Değişiklikleri Kaydet'),
+                            child: Text(l.t('common.save') ?? 'Değişiklikleri Kaydet'),
                           ),
                   ),
                 ],
