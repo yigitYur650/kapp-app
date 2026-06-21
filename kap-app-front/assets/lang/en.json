@@ -20,6 +20,8 @@
     "logout": "Log Out",
     "register": "Sign Up",
     "email": "Email",
+    "name": "Name",
+    "name_hint": "Enter your name",
     "password": "Password",
     "email_hint": "example@email.com",
     "password_hint": "Enter your password",
@@ -47,7 +49,9 @@
     "join_button": "Join",
     "dashboard_family_name": "Yur Family",
     "dashboard_list_summary": "🛒 There are 5 items waiting in the list",
-    "dashboard_go_to_list": "Go to List ->"
+    "dashboard_go_to_list": "Go to List ->",
+    "no_home_selected": "No Home Selected",
+    "no_home_desc": "To view the shopping list, first create a new home or join an existing one from the \"My Home\" tab."
   },
   "product": {
     "shopping_list": "Shopping List",

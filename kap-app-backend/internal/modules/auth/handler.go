@@ -29,6 +29,115 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 		"POST /api/v1/auth/sync-profile",
 		middleware.AuthMiddleware(http.HandlerFunc(h.handleSyncProfile)),
 	)
+	mux.HandleFunc("POST /api/v1/auth/register", h.handleRegister)
+	mux.HandleFunc("POST /api/v1/auth/login", h.handleLogin)
+}
+
+// registerRequest, POST /api/v1/auth/register istek gövdesidir.
+type registerRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Name     string `json:"name"`
+}
+
+// loginRequest, POST /api/v1/auth/login istek gövdesidir.
+type loginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// authResponse, giriş/kayıt işlemlerinin başarılı cevabıdır.
+type authResponse struct {
+	AccessToken string `json:"access_token,omitempty"`
+	UserID      string `json:"user_id"`
+}
+
+// handleRegister → POST /api/v1/auth/register
+func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+	if err != nil {
+		log.Printf("auth.handleRegister: body okunamadı: %v", err)
+		writeJSON(w, http.StatusBadRequest, errBody("İstek gövdesi okunamadı."))
+		return
+	}
+	defer r.Body.Close()
+
+	var req registerRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		log.Printf("auth.handleRegister: json unmarshal: %v", err)
+		writeJSON(w, http.StatusBadRequest, errBody("Geçersiz JSON formatı."))
+		return
+	}
+
+	email := strings.TrimSpace(req.Email)
+	password := strings.TrimSpace(req.Password)
+	name := strings.TrimSpace(req.Name)
+
+	if email == "" || password == "" || name == "" {
+		writeJSON(w, http.StatusBadRequest, errBody("E-posta, şifre ve isim alanları boş bırakılamaz."))
+		return
+	}
+
+	authResp, err := h.svc.Register(r.Context(), email, password, name)
+	if err != nil {
+		handleAuthError(w, err, "Kayıt işlemi başarısız.")
+		return
+	}
+
+	resp := authResponse{
+		AccessToken: authResp.AccessToken,
+		UserID:      authResp.User.ID,
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// handleLogin → POST /api/v1/auth/login
+func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+	if err != nil {
+		log.Printf("auth.handleLogin: body okunamadı: %v", err)
+		writeJSON(w, http.StatusBadRequest, errBody("İstek gövdesi okunamadı."))
+		return
+	}
+	defer r.Body.Close()
+
+	var req loginRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		log.Printf("auth.handleLogin: json unmarshal: %v", err)
+		writeJSON(w, http.StatusBadRequest, errBody("Geçersiz JSON formatı."))
+		return
+	}
+
+	email := strings.TrimSpace(req.Email)
+	password := strings.TrimSpace(req.Password)
+
+	if email == "" || password == "" {
+		writeJSON(w, http.StatusBadRequest, errBody("E-posta ve şifre alanları boş bırakılamaz."))
+		return
+	}
+
+	authResp, err := h.svc.Login(r.Context(), email, password)
+	if err != nil {
+		handleAuthError(w, err, "Giriş işlemi başarısız.")
+		return
+	}
+
+	resp := authResponse{
+		AccessToken: authResp.AccessToken,
+		UserID:      authResp.User.ID,
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// handleAuthError, kimlik doğrulama hatalarını yönetir ve Supabase hatalarını istemciye aktarır.
+func handleAuthError(w http.ResponseWriter, err error, defaultMsg string) {
+	var se *SupabaseError
+	if errors.As(err, &se) {
+		writeJSON(w, se.StatusCode, errBody(se.Message))
+		return
+	}
+	log.Printf("auth error: %v", err)
+	writeJSON(w, http.StatusInternalServerError, errBody(defaultMsg))
 }
 
 // syncProfileRequest, POST /api/v1/auth/sync-profile istek gövdesidir.

@@ -32,4 +32,11 @@ class AuthRepository {
     await _client.post('/auth/logout', {});
     _client.clearToken();
   }
+
+  Future<List<dynamic>> listTenants() async {
+    return _client.getList('/tenants');
+  }
+
+  void setToken(String token) => _client.setToken(token);
+  void clearToken() => _client.clearToken();
 }

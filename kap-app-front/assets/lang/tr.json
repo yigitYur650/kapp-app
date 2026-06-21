@@ -20,6 +20,8 @@
     "logout": "Çıkış Yap",
     "register": "Kayıt Ol",
     "email": "E-posta",
+    "name": "İsim",
+    "name_hint": "Adınızı girin",
     "password": "Şifre",
     "email_hint": "ornek@email.com",
     "password_hint": "Şifrenizi girin",
@@ -47,7 +49,9 @@
     "join_button": "Katıl",
     "dashboard_family_name": "Yur Ailesi",
     "dashboard_list_summary": "🛒 Listede alınmayı bekleyen 5 ürün var",
-    "dashboard_go_to_list": "Listeye Git ->"
+    "dashboard_go_to_list": "Listeye Git ->",
+    "no_home_selected": "Henüz Bir Ev Seçilmedi",
+    "no_home_desc": "Alışveriş listesini görüntülemek için önce \"Evim\" sekmesinden yeni bir ev oluşturun veya var olan bir eve katılın."
   },
   "product": {
     "shopping_list": "Alışveriş Listesi",

@@ -4,21 +4,24 @@
 // Max genişlik: 450px — tarayıcıda dikey/yatay ortala, mobilde tam ekran.
 
 import 'package:flutter/material.dart' as m;
+import 'package:provider/provider.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../home/presentation/screens/main_layout.dart';
+import '../../providers/auth_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends m.StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  m.State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+class _LoginScreenState extends m.State<LoginScreen> {
+  final m.TextEditingController _emailController = m.TextEditingController();
+  final m.TextEditingController _nameController = m.TextEditingController();
+  final m.TextEditingController _passwordController = m.TextEditingController();
   
   bool _isLoginMode = true;
   bool _isLoading = false;
@@ -27,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _emailController.dispose();
+    _nameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -39,9 +43,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final l = AppLocalizations.of(context);
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    final name = _nameController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      setState(() => _errorText = l.t('common.error'));
+      setState(() => _errorText = "Lütfen tüm alanları doldurun.");
       return;
     }
 
@@ -51,7 +56,12 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (password.length < 6) {
-      setState(() => _errorText = l.t('auth.login_error'));
+      setState(() => _errorText = "Şifre en az 6 karakter olmalıdır.");
+      return;
+    }
+
+    if (!_isLoginMode && name.isEmpty) {
+      setState(() => _errorText = "Lütfen adınızı girin.");
       return;
     }
 
@@ -60,16 +70,24 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorText = null;
     });
 
-    // Supabase veya Backend entegrasyonu simülasyonu
-    await Future.delayed(const Duration(milliseconds: 1200));
+    final authProvider = context.read<AuthProvider>();
+    
+    if (_isLoginMode) {
+      await authProvider.login(email, password);
+    } else {
+      await authProvider.register(email, password, name);
+    }
 
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    // Başarılı giriş/kayıt durumunda anasayfaya yönlendir
-    m.Navigator.of(context).pushReplacement(
-      m.MaterialPageRoute(builder: (_) => const MainLayout()),
-    );
+    if (authProvider.status == AuthStatus.error) {
+      setState(() => _errorText = authProvider.errorMessage);
+    } else if (authProvider.isAuthenticated) {
+      m.Navigator.of(context).pushReplacement(
+        m.MaterialPageRoute(builder: (_) => const MainLayout()),
+      );
+    }
   }
 
   void _toggleMode() {
@@ -77,11 +95,12 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoginMode = !_isLoginMode;
       _errorText = null;
       _passwordController.clear();
+      _nameController.clear();
     });
   }
 
   @override
-  Widget build(BuildContext context) {
+  m.Widget build(m.BuildContext context) {
     final l = AppLocalizations.of(context);
 
     return Scaffold(
@@ -106,6 +125,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // İsim etiketi ve girdisi (Sadece Kayıt modunda görünür)
+                        if (!_isLoginMode) ...[
+                          Text(l.t('auth.name'))
+                              .semiBold()
+                              .small()
+                              .foreground(),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _nameController,
+                            placeholder: Text(l.t('auth.name_hint')),
+                            keyboardType: TextInputType.name,
+                            onSubmitted: (_) => _submitForm(),
+                            features: [
+                              const InputLeadingFeature(
+                                m.Icon(m.Icons.person_outline_rounded, size: 18, color: AppTheme.textSecondary),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+
                         // E-posta etiketi
                         Text(l.t('auth.email'))
                             .semiBold()

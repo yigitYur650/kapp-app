@@ -30,6 +30,8 @@ logs/
 kap-app-backend/kapp-app
 kap-app-backend/cmd/api/api
 kap-app-backend/cmd/api/main
+kap-app-backend/api.exe
+*.exe
 *.test
 *.out
 coverage.html

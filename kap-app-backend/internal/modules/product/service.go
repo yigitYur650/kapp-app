@@ -21,6 +21,7 @@ type Product struct {
 	Price          *float64   `json:"price,omitempty"`
 	MarketName     *string    `json:"market_name,omitempty"`
 	Category       *string    `json:"category,omitempty"`
+	Unit           *string    `json:"unit,omitempty"`
 	Quantity       int        `json:"quantity"`
 	Status         string     `json:"status"`
 	ExpirationDate *time.Time `json:"expiration_date,omitempty"`
@@ -69,6 +70,7 @@ type AddProductInput struct {
 	Price          *float64
 	MarketName     *string
 	Category       *string
+	Unit           *string
 	Quantity       *int    // nil → 1
 	ExpirationDate *string // YYYY-MM-DD
 }
@@ -119,6 +121,7 @@ func (s *Service) AddProduct(ctx context.Context, userID string, in AddProductIn
 		Price:          in.Price,
 		MarketName:     in.MarketName,
 		Category:       in.Category,
+		Unit:           in.Unit,
 		Quantity:       qty,
 		ExpirationDate: expDate,
 	})

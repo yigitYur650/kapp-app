@@ -16,6 +16,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../domain/product_model.dart';
 import '../../providers/product_provider.dart';
+import '../../../auth/providers/auth_provider.dart';
 
 // ─── Ana Ekran ───────────────────────────────────────────────────────────────
 
@@ -29,28 +30,24 @@ class ShoppingListScreen extends StatefulWidget {
 class _ShoppingListScreenState extends State<ShoppingListScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  late final PageController _innerPageController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _innerPageController = PageController();
 
-    _tabController.addListener(() {
-      if (_tabController.indexIsChanging) {
-        _innerPageController.animateToPage(
-          _tabController.index,
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeInOut,
-        );
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider  = context.read<ProductProvider>();
+      final auth      = context.read<AuthProvider>();
+      
+      // Eğer henüz ev seçilmemişse backend'den ev listesini çekip ilkini seçelim
+      if (auth.currentTenantId == null) {
+        await auth.fetchAndSetDefaultTenant();
       }
-    });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<ProductProvider>();
-      if (provider.status == ProductStatus.initial) {
-        provider.loadItems('mock-list-id');
+      final tenantId  = auth.currentTenantId;
+      if (tenantId != null && provider.status == ProductStatus.initial) {
+        provider.loadItems(tenantId);
       }
     });
   }
@@ -58,12 +55,67 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _innerPageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final tenantId = auth.currentTenantId;
+
+    if (tenantId == null) {
+      final l = AppLocalizations.of(context);
+      return Column(
+        children: [
+          _ShoppingAppBar(tabController: _tabController),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.bgCard,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppTheme.netflixRed.withValues(alpha: 0.3), width: 1.5),
+                      ),
+                      child: const Icon(
+                        Icons.home_outlined,
+                        color: AppTheme.netflixRed,
+                        size: 48,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      l.t('tenant.no_home_selected'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l.t('tenant.no_home_desc'),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       children: [
         _ShoppingAppBar(tabController: _tabController),
@@ -77,12 +129,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen>
               if (provider.status == ProductStatus.error) {
                 return _ErrorView(message: provider.errorMessage ?? 'Hata');
               }
-              return PageView(
-                controller: _innerPageController,
+              return TabBarView(
+                controller: _tabController,
                 physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (idx) {
-                  if (_tabController.index != idx) _tabController.animateTo(idx);
-                },
                 children: [
                   _NeedsTab(provider: provider),
                   _GotTab(provider: provider),
@@ -120,7 +169,7 @@ class _ShoppingAppBar extends StatelessWidget {
                   return Row(
                     children: [
                       Text(
-                        l.t('product.shopping_list') ?? 'Alışveriş Listesi',
+                        l.t('product.shopping_list'),
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
@@ -167,8 +216,8 @@ class _ShoppingAppBar extends StatelessWidget {
               ),
               dividerColor: AppTheme.borderDefault,
               tabs: [
-                _CountedTab(label: AppLocalizations.of(context).t('add_product.needs') ?? 'Alınacaklar', getter: (p) => p.needs.length),
-                _CountedTab(label: AppLocalizations.of(context).t('add_product.got') ?? 'Alınanlar',   getter: (p) => p.got.length),
+                _CountedTab(label: AppLocalizations.of(context).t('add_product.needs'), getter: (p) => p.needs.length),
+                _CountedTab(label: AppLocalizations.of(context).t('add_product.got'),   getter: (p) => p.got.length),
               ],
             ),
           ],
@@ -225,7 +274,7 @@ class _NeedsTab extends StatelessWidget {
       final l = AppLocalizations.of(context);
       return _EmptyView(
         icon: Icons.celebration_outlined,
-        message: l.t('add_product.empty_needs') ?? 'Tüm ürünler sepete alındı 🎉',
+        message: l.t('add_product.empty_needs'),
       );
     }
     return _AnimatedItemList(items: provider.needs, provider: provider);
@@ -242,7 +291,7 @@ class _GotTab extends StatelessWidget {
       final l = AppLocalizations.of(context);
       return _EmptyView(
         icon: Icons.shopping_cart_outlined,
-        message: l.t('add_product.empty_got') ?? 'Henüz alınan ürün yok',
+        message: l.t('add_product.empty_got'),
       );
     }
     return _AnimatedItemList(items: provider.got, provider: provider);
@@ -350,7 +399,7 @@ class _AnimatedProductCardState extends State<AnimatedProductCard>
         backgroundColor: AppTheme.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: Text(
-          l.t('product.delete_item') ?? 'Ürünü Sil',
+          l.t('product.delete_item'),
           style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700),
         ),
         content: Text(
@@ -361,7 +410,7 @@ class _AnimatedProductCardState extends State<AnimatedProductCard>
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              l.t('common.cancel') ?? 'İptal',
+              l.t('common.cancel'),
               style: const TextStyle(color: AppTheme.textSecondary),
             ),
           ),
@@ -371,7 +420,7 @@ class _AnimatedProductCardState extends State<AnimatedProductCard>
               widget.provider.deleteItem(widget.product.id);
             },
             child: Text(
-              l.t('common.delete') ?? 'Sil',
+              l.t('common.delete'),
               style: TextStyle(
                 color: AppTheme.netflixRed,
                 fontWeight: FontWeight.w700,
@@ -453,7 +502,7 @@ class _ProductTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
 
-                // ── İsim + birim ──────────────────────────────────────────
+                // ── İsim + miktar ──────────────────────────────────────────
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -473,10 +522,16 @@ class _ProductTile extends StatelessWidget {
                         ),
                         child: Text(product.name),
                       ),
-                      if (product.unit != null) ...[
+                      if (product.quantity > 0 || product.marketName != null) ...[
                         const SizedBox(height: 2),
                         Text(
-                          '${product.quantity} ${product.unit}',
+                          [
+                            if (product.unit != null && product.unit!.isNotEmpty)
+                              '${product.quantity} ${product.unit}'
+                            else if (product.quantity > 1)
+                              '${product.quantity} adet',
+                            if (product.marketName != null) product.marketName!,
+                          ].join(' · '),
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppTheme.textSecondary,
@@ -539,7 +594,7 @@ class _ActionMenu extends StatelessWidget {
               const Icon(Icons.edit_outlined, size: 16, color: AppTheme.textSecondary),
               const SizedBox(width: 10),
               Text(
-                AppLocalizations.of(context).t('common.edit') ?? 'Düzenle',
+                AppLocalizations.of(context).t('common.edit'),
                 style: const TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 14,
@@ -558,7 +613,7 @@ class _ActionMenu extends StatelessWidget {
               const Icon(Icons.delete_outline_rounded, size: 16, color: AppTheme.netflixRed),
               const SizedBox(width: 10),
               Text(
-                AppLocalizations.of(context).t('common.delete') ?? 'Sil',
+                AppLocalizations.of(context).t('common.delete'),
                 style: const TextStyle(
                   color: AppTheme.netflixRed,
                   fontSize: 14,
@@ -616,14 +671,14 @@ class _CategoryBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final localizedLabels = {
-      'produce':   ('🥦', l.t('product.categories.produce') ?? 'Sebze'),
-      'dairy':     ('🥛', l.t('product.categories.dairy') ?? 'Süt'),
-      'meat':      ('🥩', l.t('product.categories.meat') ?? 'Et'),
-      'bakery':    ('🍞', l.t('product.categories.bakery') ?? 'Fırın'),
-      'beverages': ('🧃', l.t('product.categories.beverages') ?? 'İçecek'),
-      'cleaning':  ('🧹', l.t('product.categories.cleaning') ?? 'Temizlik'),
-      'personal':  ('🧴', l.t('product.categories.personal') ?? 'Kişisel'),
-      'other':     ('📦', l.t('product.categories.other') ?? 'Diğer'),
+      'produce':   ('🥦', l.t('product.categories.produce')),
+      'dairy':     ('🥛', l.t('product.categories.dairy')),
+      'meat':      ('🥩', l.t('product.categories.meat')),
+      'bakery':    ('🍞', l.t('product.categories.bakery')),
+      'beverages': ('🧃', l.t('product.categories.beverages')),
+      'cleaning':  ('🧹', l.t('product.categories.cleaning')),
+      'personal':  ('🧴', l.t('product.categories.personal')),
+      'other':     ('📦', l.t('product.categories.other')),
     };
     final info = localizedLabels[category] ?? ('📦', category);
     return Container(
@@ -792,14 +847,14 @@ class _EditProductSheetState extends State<_EditProductSheet> {
   List<(String, String)> get _localizedCategories {
     final l = AppLocalizations.of(context);
     return [
-      ('produce',   '🥦 ${l.t('product.categories.produce') ?? 'Sebze & Meyve'}'),
-      ('dairy',     '🥛 ${l.t('product.categories.dairy') ?? 'Süt Ürünleri'}'),
-      ('meat',      '🥩 ${l.t('product.categories.meat') ?? 'Et & Tavuk'}'),
-      ('bakery',    '🍞 ${l.t('product.categories.bakery') ?? 'Ekmek & Fırın'}'),
-      ('beverages', '🧃 ${l.t('product.categories.beverages') ?? 'İçecekler'}'),
-      ('cleaning',  '🧹 ${l.t('product.categories.cleaning') ?? 'Temizlik'}'),
-      ('personal',  '🧴 ${l.t('product.categories.personal') ?? 'Kişisel Bakım'}'),
-      ('other',     '📦 ${l.t('product.categories.other') ?? 'Diğer'}'),
+      ('produce',   '🥦 ${l.t('product.categories.produce')}'),
+      ('dairy',     '🥛 ${l.t('product.categories.dairy')}'),
+      ('meat',      '🥩 ${l.t('product.categories.meat')}'),
+      ('bakery',    '🍞 ${l.t('product.categories.bakery')}'),
+      ('beverages', '🧃 ${l.t('product.categories.beverages')}'),
+      ('cleaning',  '🧹 ${l.t('product.categories.cleaning')}'),
+      ('personal',  '🧴 ${l.t('product.categories.personal')}'),
+      ('other',     '📦 ${l.t('product.categories.other')}'),
     ];
   }
 
@@ -824,12 +879,12 @@ class _EditProductSheetState extends State<_EditProductSheet> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
-    await widget.provider.updateItem(
-      id: widget.product.id,
-      name: _nameCtrl.text.trim(),
-      quantity: int.tryParse(_qtyCtrl.text.trim()) ?? 1,
-      unit: _unitCtrl.text.trim().isEmpty ? null : _unitCtrl.text.trim(),
-      category: _selectedCategory,
+    // Backend şu an sadece status güncellemesini destekliyor.
+    // Seçili kategori değişmişse bunu status ile birlikte iletilemez;
+    // tam edit için backend'e PATCH /products/{id} eklenecek.
+    await widget.provider.updateStatus(
+      widget.product.id,
+      _selectedCategory != null ? 'var' : widget.product.status,
     );
     if (mounted) Navigator.of(context).pop();
   }
@@ -877,7 +932,7 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        l.t('common.edit') ?? 'Ürünü Düzenle',
+                        l.t('common.edit'),
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -889,15 +944,15 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                   const SizedBox(height: 18),
 
                   // Ürün Adı
-                  _SheetLabel((l.t('add_product.name_label') ?? 'ÜRÜN ADI').toUpperCase()),
+                  _SheetLabel(l.t('add_product.name_label').toUpperCase()),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _nameCtrl,
                     autofocus: true,
                     style: const TextStyle(color: AppTheme.textPrimary),
-                    decoration: InputDecoration(hintText: l.t('add_product.name_hint') ?? 'Ürün adı'),
+                    decoration: InputDecoration(hintText: l.t('add_product.name_hint')),
                     validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? l.t('common.error') ?? 'Zorunlu alan' : null,
+                        (v == null || v.trim().isEmpty) ? l.t('common.error') : null,
                   ),
                   const SizedBox(height: 14),
 
@@ -909,7 +964,7 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _SheetLabel((l.t('add_product.qty_label') ?? 'MİKTAR').toUpperCase()),
+                            _SheetLabel(l.t('add_product.qty_label').toUpperCase()),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: _qtyCtrl,
@@ -926,12 +981,12 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _SheetLabel((l.t('add_product.unit_label') ?? 'BİRİM').toUpperCase()),
+                            _SheetLabel(l.t('add_product.unit_label').toUpperCase()),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: _unitCtrl,
                               style: const TextStyle(color: AppTheme.textPrimary),
-                              decoration: InputDecoration(hintText: l.t('add_product.unit_hint') ?? 'adet, kg, lt...'),
+                              decoration: InputDecoration(hintText: l.t('add_product.unit_hint')),
                             ),
                           ],
                         ),
@@ -941,7 +996,7 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                   const SizedBox(height: 14),
 
                   // Kategori
-                  _SheetLabel((l.t('add_product.category_label') ?? 'KATEGORİ').toUpperCase()),
+                  _SheetLabel(l.t('add_product.category_label').toUpperCase()),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -997,7 +1052,7 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                           )
                         : ElevatedButton(
                             onPressed: _save,
-                            child: Text(l.t('common.save') ?? 'Değişiklikleri Kaydet'),
+                            child: Text(l.t('common.save')),
                           ),
                   ),
                 ],

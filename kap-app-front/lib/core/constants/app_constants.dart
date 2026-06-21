@@ -6,7 +6,7 @@ const String kAppVersion = '0.1.0';
 // API
 const String kApiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://localhost:8080/api/v1',
+  defaultValue: 'http://192.168.0.8:8080/api/v1',
 );
 
 // Supported locales

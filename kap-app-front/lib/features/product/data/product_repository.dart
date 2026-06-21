@@ -1,43 +1,54 @@
 // lib/features/product/data/product_repository.dart
 
 import '../../../core/network/api_client.dart';
+import '../domain/product_model.dart';
 
 class ProductRepository {
   final ApiClient _client;
   ProductRepository(this._client);
 
-  Future<List<dynamic>> getItems(String listId) async {
-    final res = await _client.get('/lists/$listId/items');
-    return res['items'] as List<dynamic>? ?? [];
+  Future<List<Product>> getItems(String tenantId) async {
+    final raw = await _client.getList('/products?tenant_id=$tenantId');
+    return raw
+        .map((e) => Product.fromMap(e as Map<String, dynamic>))
+        .toList();
   }
 
-  Future<Map<String, dynamic>> addItem({
-    required String listId,
+  Future<Product> addProduct({
+    required String tenantId,
     required String name,
     required int quantity,
-    String? unit,
+    double? price,
+    String? marketName,
     String? category,
+    String? unit,
+    String? expirationDate,
   }) async {
-    return _client.post('/lists/$listId/items', {
+    final res = await _client.post('/products', {
+      'tenant_id': tenantId,
       'name': name,
       'quantity': quantity,
-      if (unit != null) 'unit': unit,
+      'status': 'yok',
+      'is_completed': false,
+      'bought': false,
+      if (price != null) 'price': price,
+      if (marketName != null) 'market_name': marketName,
       if (category != null) 'category': category,
+      if (unit != null && unit.isNotEmpty) 'unit': unit,
+      if (expirationDate != null) 'expiration_date': expirationDate,
     });
+    return Product.fromMap(res);
   }
 
-  Future<Map<String, dynamic>> toggleItem({
-    required String listId,
-    required String itemId,
-    required bool checked,
+  Future<Product> updateStatus({
+    required String productId,
+    required String status,
   }) async {
-    return _client.put('/lists/$listId/items/$itemId', {'checked': checked});
+    final res = await _client.patch('/products/$productId/status', {'status': status});
+    return Product.fromMap(res);
   }
 
-  Future<void> deleteItem({
-    required String listId,
-    required String itemId,
-  }) async {
-    await _client.delete('/lists/$listId/items/$itemId');
+  Future<void> deleteProduct(String productId) async {
+    await _client.delete('/products/$productId');
   }
 }

@@ -213,14 +213,14 @@ class _ThemeSection extends m.StatelessWidget {
                     _ColorButton(
                       color1: AppTheme.bgBlack,
                       color2: AppTheme.netflixRed,
-                      isSelected: accentColor.value == AppTheme.netflixRed.value,
+                      isSelected: accentColor.toARGB32() == AppTheme.netflixRed.toARGB32(),
                       onTap: () => onColorChanged(AppTheme.netflixRed),
                     ),
                     const m.SizedBox(width: 12),
                     _ColorButton(
                       color1: const m.Color(0xFF1A1A2E),
                       color2: const m.Color(0xFFE94560),
-                      isSelected: accentColor.value == const m.Color(0xFFE94560).value,
+                      isSelected: accentColor.toARGB32() == const m.Color(0xFFE94560).toARGB32(),
                       onTap: () => onColorChanged(const m.Color(0xFFE94560)),
                     ),
                     const m.SizedBox(width: 12),

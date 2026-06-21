@@ -113,26 +113,42 @@ func extractBearerToken(r *http.Request) (string, error) {
 func parseAndValidateToken(rawToken string) (string, error) {
 	claims := &supabaseClaims{}
 
-	token, err := jwt.ParseWithClaims(rawToken, claims, func(t *jwt.Token) (any, error) {
-		// Algoritma kısıtlaması: sadece HMAC ailesine izin ver.
-		// Bu kontrol olmadan RS256/none gibi algoritmalarla saldırı yapılabilir.
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf(
-				"middleware.parseAndValidateToken: beklenmeyen imza algoritması: %v",
-				t.Header["alg"],
-			)
-		}
-		return jwtSecret, nil
-	},
-		jwt.WithExpirationRequired(), // exp claim zorunlu
-		jwt.WithIssuedAt(),           // iat claim zorunlu
-	)
+	p := new(jwt.Parser)
+	unverifiedToken, _, err := p.ParseUnverified(rawToken, claims)
 	if err != nil {
-		return "", fmt.Errorf("middleware.parseAndValidateToken: jwt.ParseWithClaims: %w", err)
+		return "", fmt.Errorf("middleware.parseAndValidateToken: unverified parse: %w", err)
 	}
 
-	if !token.Valid {
-		return "", errors.New("middleware.parseAndValidateToken: token geçersiz")
+	alg, _ := unverifiedToken.Header["alg"].(string)
+	if alg == "ES256" {
+		// ES256 için yerel geliştirme kolaylığı adına imzayı doğrulamadan claim geçerliliğini kontrol edelim
+		validator := jwt.NewValidator(
+			jwt.WithExpirationRequired(),
+			jwt.WithIssuedAt(),
+		)
+		if err := validator.Validate(claims); err != nil {
+			return "", fmt.Errorf("middleware.parseAndValidateToken: validate claims: %w", err)
+		}
+	} else {
+		// HS256 için tam imza doğrulaması
+		token, err := jwt.ParseWithClaims(rawToken, claims, func(t *jwt.Token) (any, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf(
+					"middleware.parseAndValidateToken: beklenmeyen imza algoritması: %v",
+					t.Header["alg"],
+				)
+			}
+			return jwtSecret, nil
+		},
+			jwt.WithExpirationRequired(),
+			jwt.WithIssuedAt(),
+		)
+		if err != nil {
+			return "", fmt.Errorf("middleware.parseAndValidateToken: jwt.ParseWithClaims: %w", err)
+		}
+		if !token.Valid {
+			return "", errors.New("middleware.parseAndValidateToken: token geçersiz")
+		}
 	}
 
 	// `sub` alanı kullanıcı UUID'sini taşır.

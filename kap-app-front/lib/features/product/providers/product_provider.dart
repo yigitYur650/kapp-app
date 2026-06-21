@@ -1,41 +1,51 @@
 // lib/features/product/providers/product_provider.dart
 
 import 'package:flutter/foundation.dart';
+import '../data/product_repository.dart';
 import '../domain/product_model.dart';
 
 enum ProductStatus { initial, loading, loaded, error }
 
 class ProductProvider extends ChangeNotifier {
+  final ProductRepository _repo;
+
+  ProductProvider(this._repo);
+
   ProductStatus _status = ProductStatus.initial;
   String? _errorMessage;
   List<Product> _items = [];
 
-  // Onay bekleyen toggle'lar (animasyon için)
   final Set<String> _pendingToggles = {};
 
-  ProductStatus get status        => _status;
-  String? get errorMessage        => _errorMessage;
-  Set<String> get pendingToggles  => _pendingToggles;
+  DateTime? _lastFetched;
+  String? _cachedTenantId;
+  static const _cacheDuration = Duration(minutes: 2);
 
-  /// Tiklenmeyen ürünler (Alınacaklar sekmesi)
-  List<Product> get needs => _items.where((p) => !p.checked).toList();
+  ProductStatus get status       => _status;
+  String? get errorMessage       => _errorMessage;
+  Set<String> get pendingToggles => _pendingToggles;
 
-  /// Tiklenen ürünler (Alınanlar sekmesi)
-  List<Product> get got   => _items.where((p) => p.checked).toList();
+  List<Product> get needs => _items.where((p) => p.status == 'yok').toList();
+  List<Product> get got => _items.where((p) => p.checked).toList();
 
-  // ─── Veri Yükleme ─────────────────────────────────────────────────────────
+  Future<void> loadItems(String tenantId, {bool forceRefresh = false}) async {
+    if (!forceRefresh &&
+        _cachedTenantId == tenantId &&
+        _lastFetched != null &&
+        DateTime.now().difference(_lastFetched!) < _cacheDuration &&
+        _status == ProductStatus.loaded) {
+      return;
+    }
 
-  Future<void> loadItems(String listId) async {
     _status = ProductStatus.loading;
     _errorMessage = null;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 1400)); // shimmer gösterimi
-
     try {
-      // TODO: _repo.getItems(listId)
-      _items = _mockItems();
+      _items = await _repo.getItems(tenantId);
       _status = ProductStatus.loaded;
+      _lastFetched = DateTime.now();
+      _cachedTenantId = tenantId;
     } catch (e) {
       _errorMessage = e.toString();
       _status = ProductStatus.error;
@@ -43,76 +53,89 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ─── Toggle (gecikme + animasyon desteğiyle) ──────────────────────────────
+  void invalidateCache() {
+    _lastFetched = null;
+    _cachedTenantId = null;
+    _items = [];
+    _status = ProductStatus.initial;
+  }
 
-  /// Kartı 300ms "beklemede" durumuna alır, sonra gerçek toggle yapar.
   Future<void> toggleItem(String id) async {
-    if (_pendingToggles.contains(id)) return; // çift tıklamayı engelle
+    if (_pendingToggles.contains(id)) return;
 
     final idx = _items.indexWhere((p) => p.id == id);
     if (idx == -1) return;
 
-    // 1) Kartı animasyon moduna al → UI animasyonu başlasın
     _pendingToggles.add(id);
     notifyListeners();
 
-    // 2) Animasyonun tamamlanması için bekle (kart uçarken)
     await Future.delayed(const Duration(milliseconds: 320));
 
-    // 3) Gerçek toggle
-    _items[idx] = _items[idx].copyWith(checked: !_items[idx].checked);
+    final current = _items[idx];
+    final newStatus = current.status == 'yok' ? 'var' : 'yok';
+
+    _items[idx] = current.copyWith(status: newStatus);
     _pendingToggles.remove(id);
     notifyListeners();
 
-    // TODO: _repo.toggleItem(...)
+    try {
+      final updated = await _repo.updateStatus(
+        productId: id,
+        status: newStatus,
+      );
+      _items[idx] = updated;
+      
+      _lastFetched = null;
+      _cachedTenantId = null;
+      
+      notifyListeners();
+    } catch (e) {
+      _items[idx] = current;
+      _errorMessage = e.toString();
+      notifyListeners();
+    }
   }
-
-  // ─── Ürün Ekleme ──────────────────────────────────────────────────────────
 
   Future<void> addItem({
+    required String tenantId,
     required String name,
     required int quantity,
-    String? unit,
+    double? price,
+    String? marketName,
     String? category,
-  }) async {
-    final product = Product(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name,
-      quantity: quantity,
-      unit: unit,
-      category: category,
-      checked: false,
-    );
-    _items.insert(0, product);
-    notifyListeners();
-    // TODO: _repo.addItem(...)
-  }
-
-  // ─── Ürün Düzenleme ───────────────────────────────────────────────────────
-
-  Future<void> updateItem({
-    required String id,
-    required String name,
-    required int quantity,
     String? unit,
-    String? category,
+    String? expirationDate,
   }) async {
-    final idx = _items.indexWhere((p) => p.id == id);
-    if (idx == -1) return;
-    _items[idx] = _items[idx].copyWith(
-      name: name,
-      quantity: quantity,
-      unit: unit,
-      category: category,
-    );
-    notifyListeners();
-    // TODO: _repo.updateItem(...)
+    try {
+      final product = await _repo.addProduct(
+        tenantId: tenantId,
+        name: name,
+        quantity: quantity,
+        price: price,
+        marketName: marketName,
+        category: category,
+        unit: unit,
+        expirationDate: expirationDate,
+      );
+      final newProduct = product.copyWith(status: 'yok');
+      _items.insert(0, newProduct);
+      
+      _lastFetched = null;
+      _cachedTenantId = null;
+      
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+    }
   }
-
-  // ─── Ürün Silme ───────────────────────────────────────────────────────────
 
   Future<void> deleteItem(String id) async {
-    // Sil animasyonu için önce pending'e ekle, sonra gerçekten sil
+    final idx = _items.indexWhere((p) => p.id == id);
+    if (idx == -1) return;
+
+    final backup = _items[idx];
+
     _pendingToggles.add(id);
     notifyListeners();
 
@@ -121,20 +144,41 @@ class ProductProvider extends ChangeNotifier {
     _items.removeWhere((p) => p.id == id);
     _pendingToggles.remove(id);
     notifyListeners();
-    // TODO: _repo.deleteItem(...)
+
+    try {
+      await _repo.deleteProduct(id);
+      
+      _lastFetched = null;
+      _cachedTenantId = null;
+    } catch (e) {
+      _items.insert(idx, backup);
+      _errorMessage = e.toString();
+      notifyListeners();
+    }
   }
 
-  // ─── Mock Veri ───────────────────────────────────────────────────────────
+  Future<void> updateStatus(String id, String status) async {
+    final idx = _items.indexWhere((p) => p.id == id);
+    if (idx == -1) return;
 
-  List<Product> _mockItems() {
-    return [
-      const Product(id: '1', name: 'Süt', quantity: 2, unit: 'lt', category: 'dairy'),
-      const Product(id: '2', name: 'Ekmek', quantity: 1, unit: 'adet', category: 'bakery'),
-      const Product(id: '3', name: 'Yumurta', quantity: 12, unit: 'adet', category: 'dairy'),
-      const Product(id: '4', name: 'Domates', quantity: 1, unit: 'kg', category: 'produce'),
-      const Product(id: '5', name: 'Salatalık', quantity: 500, unit: 'gr', category: 'produce'),
-      const Product(id: '6', name: 'Deterjan', quantity: 1, unit: 'adet', category: 'cleaning', checked: true),
-      const Product(id: '7', name: 'Zeytinyağı', quantity: 1, unit: 'lt', category: 'other'),
-    ];
+    final backup = _items[idx];
+    _items[idx] = backup.copyWith(status: status);
+    notifyListeners();
+
+    try {
+      final updated = await _repo.updateStatus(productId: id, status: status);
+      _items[idx] = updated;
+      
+      _lastFetched = null;
+      _cachedTenantId = null;
+      
+      notifyListeners();
+    } catch (e) {
+      _items[idx] = backup;
+      _errorMessage = e.toString();
+      notifyListeners();
+    }
   }
+
+  Future<void> updateItem(String id, String status) => updateStatus(id, status);
 }

@@ -50,30 +50,30 @@ func scanProduct(row interface {
 }, p *Product) error {
 	return row.Scan(
 		&p.ID, &p.TenantID, &p.Name,
-		&p.Price, &p.MarketName, &p.Category,
+		&p.Price, &p.MarketName, &p.Category, &p.Unit,
 		&p.Quantity, &p.Status, &p.ExpirationDate,
 		&p.AddedBy, &p.CreatedAt, &p.UpdatedAt,
 	)
 }
 
 const selectCols = `
-	id, tenant_id, name, price, market_name, category,
+	id, tenant_id, name, price, market_name, category, unit,
 	quantity, status, expiration_date, added_by, created_at, updated_at`
 
 // Create, products tablosuna yeni ürün ekler.
 func (r *Repository) Create(ctx context.Context, in CreateInput) (*Product, error) {
 	q := `
 		INSERT INTO products
-			(tenant_id, added_by, name, price, market_name, category,
+			(tenant_id, added_by, name, price, market_name, category, unit,
 			 quantity, status, expiration_date, created_at, updated_at)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,'var',$8,NOW(),NOW())
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'yok',$9,NOW(),NOW())
 		RETURNING ` + selectCols
 
 	var p Product
 	if err := scanProduct(
 		r.db.QueryRow(ctx, q,
 			in.TenantID, in.AddedBy, in.Name,
-			in.Price, in.MarketName, in.Category,
+			in.Price, in.MarketName, in.Category, in.Unit,
 			in.Quantity, in.ExpirationDate,
 		),
 		&p,
@@ -88,7 +88,7 @@ func (r *Repository) ListByTenantID(ctx context.Context, tenantID string) ([]Pro
 	q := `
 		SELECT ` + selectCols + `
 		FROM products
-		WHERE tenant_id = $1
+		WHERE tenant_id = $1 AND deleted_at IS NULL
 		ORDER BY created_at DESC`
 
 	rows, err := r.db.Query(ctx, q, tenantID)
@@ -114,7 +114,7 @@ func (r *Repository) ListByTenantID(ctx context.Context, tenantID string) ([]Pro
 
 // FindByID, ID ile ürün arar. Bulunamazsa (nil, nil) döner.
 func (r *Repository) FindByID(ctx context.Context, productID string) (*Product, error) {
-	q := `SELECT ` + selectCols + ` FROM products WHERE id = $1`
+	q := `SELECT ` + selectCols + ` FROM products WHERE id = $1 AND deleted_at IS NULL`
 
 	var p Product
 	if err := scanProduct(r.db.QueryRow(ctx, q, productID), &p); err != nil {
@@ -132,7 +132,7 @@ func (r *Repository) UpdateStatus(ctx context.Context, productID, status string)
 	q := `
 		UPDATE products
 		SET    status = $2, updated_at = NOW()
-		WHERE  id = $1
+		WHERE  id = $1 AND deleted_at IS NULL
 		RETURNING ` + selectCols
 
 	var p Product
@@ -148,14 +148,26 @@ func (r *Repository) UpdateStatus(ctx context.Context, productID, status string)
 // Delete, ürünü veritabanından siler.
 // Satır yoksa ErrProductNotFound döner.
 func (r *Repository) Delete(ctx context.Context, productID string) error {
-	tag, err := r.db.Exec(ctx, `DELETE FROM products WHERE id = $1`, productID)
+	_, err := r.db.Exec(ctx, `DELETE FROM products WHERE id = $1`, productID)
 	if err != nil {
 		return fmt.Errorf("product.Repository.Delete: %w", err)
 	}
-	if tag.RowsAffected() == 0 {
-		return ErrProductNotFound
-	}
 	return nil
+}
+
+// DeleteExpiredSoftDeleted, 30 günden eski soft-deleted ürünleri kalıcı olarak siler.
+// Silinen satır sayısını döner. GC goroutine tarafından çağrılır.
+func (r *Repository) DeleteExpiredSoftDeleted(ctx context.Context) (int64, error) {
+	const q = `
+		DELETE FROM products
+		WHERE deleted_at IS NOT NULL
+		  AND deleted_at < (NOW() AT TIME ZONE 'UTC') - INTERVAL '30 days'`
+
+	tag, err := r.db.Exec(ctx, q)
+	if err != nil {
+		return 0, fmt.Errorf("product.Repository.DeleteExpiredSoftDeleted: %w", err)
+	}
+	return tag.RowsAffected(), nil
 }
 
 // CreateInput, Create fonksiyonuna geçilen parametreler.
@@ -166,6 +178,8 @@ type CreateInput struct {
 	Price          *float64
 	MarketName     *string
 	Category       *string
+	Unit           *string
 	Quantity       int
 	ExpirationDate *time.Time
 }
+

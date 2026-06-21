@@ -47,6 +47,7 @@ type addProductRequest struct {
 	Category       *string  `json:"category"`
 	Quantity       *int     `json:"quantity"`
 	ExpirationDate *string  `json:"expiration_date"` // YYYY-MM-DD
+	Unit           *string  `json:"unit"`
 }
 
 type updateStatusRequest struct {
@@ -73,6 +74,7 @@ func (h *Handler) handleAdd(w http.ResponseWriter, r *http.Request) {
 		Price:          req.Price,
 		MarketName:     req.MarketName,
 		Category:       req.Category,
+		Unit:           req.Unit,
 		Quantity:       req.Quantity,
 		ExpirationDate: req.ExpirationDate,
 	})

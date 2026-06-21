@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../auth/providers/auth_provider.dart';
 import '../../../product/providers/product_provider.dart';
 import 'hub_screen.dart';
 import '../../../product/presentation/screens/shopping_list_screen.dart';
@@ -32,11 +33,7 @@ class _MainLayoutState extends State<MainLayout> {
     SettingsScreen(),
   ];
 
-  static const _navItems = [
-    _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Evim'),
-    _NavItem(icon: Icons.list_alt_outlined, activeIcon: Icons.list_alt_rounded, label: 'Liste'),
-    _NavItem(icon: Icons.settings_outlined, activeIcon: Icons.settings_rounded, label: 'Ayarlar'),
-  ];
+
 
   @override
   void initState() {
@@ -70,9 +67,9 @@ class _MainLayoutState extends State<MainLayout> {
 
     // Update nav items using translation keys
     final translatedNavItems = [
-      _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: l.t('nav.hub') ?? 'Evim'),
-      _NavItem(icon: Icons.list_alt_outlined, activeIcon: Icons.list_alt_rounded, label: l.t('nav.list') ?? 'Liste'),
-      _NavItem(icon: Icons.settings_outlined, activeIcon: Icons.settings_rounded, label: l.t('nav.settings') ?? 'Ayarlar'),
+      _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: l.t('nav.hub')),
+      _NavItem(icon: Icons.list_alt_outlined, activeIcon: Icons.list_alt_rounded, label: l.t('nav.list')),
+      _NavItem(icon: Icons.settings_outlined, activeIcon: Icons.settings_rounded, label: l.t('nav.settings')),
     ];
 
     return Scaffold(
@@ -304,16 +301,7 @@ class _AddProductSheetState extends State<_AddProductSheet> {
   String? _selectedCategory;
   bool _isSaving = false;
 
-  static const _categories = [
-    ('produce',   '🥦 Sebze & Meyve'),
-    ('dairy',     '🥛 Süt Ürünleri'),
-    ('meat',      '🥩 Et & Tavuk'),
-    ('bakery',    '🍞 Ekmek & Fırın'),
-    ('beverages', '🧃 İçecekler'),
-    ('cleaning',  '🧹 Temizlik'),
-    ('personal',  '🧴 Kişisel Bakım'),
-    ('other',     '📦 Diğer'),
-  ];
+
 
   @override
   void dispose() {
@@ -325,13 +313,23 @@ class _AddProductSheetState extends State<_AddProductSheet> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final auth = context.read<AuthProvider>();
+    final tenantId = auth.currentTenantId;
+    if (tenantId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Önce bir ev seçmelisiniz.')),
+      );
+      return;
+    }
     setState(() => _isSaving = true);
     final qty = int.tryParse(_qtyCtrl.text.trim()) ?? 1;
+    final unit = _unitCtrl.text.trim();
     await context.read<ProductProvider>().addItem(
+          tenantId: tenantId,
           name: _nameCtrl.text.trim(),
           quantity: qty,
-          unit: _unitCtrl.text.trim().isEmpty ? null : _unitCtrl.text.trim(),
           category: _selectedCategory,
+          unit: unit.isNotEmpty ? unit : null,
         );
     if (mounted) Navigator.of(context).pop();
   }
@@ -340,14 +338,14 @@ class _AddProductSheetState extends State<_AddProductSheet> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final localizedCategories = [
-      ('produce',   '🥦 ${l.t('product.categories.produce') ?? 'Sebze & Meyve'}'),
-      ('dairy',     '🥛 ${l.t('product.categories.dairy') ?? 'Süt Ürünleri'}'),
-      ('meat',      '🥩 ${l.t('product.categories.meat') ?? 'Et & Tavuk'}'),
-      ('bakery',    '🍞 ${l.t('product.categories.bakery') ?? 'Ekmek & Fırın'}'),
-      ('beverages', '🧃 ${l.t('product.categories.beverages') ?? 'İçecekler'}'),
-      ('cleaning',  '🧹 ${l.t('product.categories.cleaning') ?? 'Temizlik'}'),
-      ('personal',  '🧴 ${l.t('product.categories.personal') ?? 'Kişisel Bakım'}'),
-      ('other',     '📦 ${l.t('product.categories.other') ?? 'Diğer'}'),
+      ('produce',   '🥦 ${l.t('product.categories.produce')}'),
+      ('dairy',     '🥛 ${l.t('product.categories.dairy')}'),
+      ('meat',      '🥩 ${l.t('product.categories.meat')}'),
+      ('bakery',    '🍞 ${l.t('product.categories.bakery')}'),
+      ('beverages', '🧃 ${l.t('product.categories.beverages')}'),
+      ('cleaning',  '🧹 ${l.t('product.categories.cleaning')}'),
+      ('personal',  '🧴 ${l.t('product.categories.personal')}'),
+      ('other',     '📦 ${l.t('product.categories.other')}'),
     ];
 
     return Container(
@@ -388,7 +386,7 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      l.t('add_product.title') ?? 'Ürün Ekle',
+                      l.t('add_product.title'),
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -400,15 +398,15 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                 const SizedBox(height: 18),
 
                 // Ürün Adı
-                _SheetLabel((l.t('add_product.name_label') ?? 'ÜRÜN ADI').toUpperCase()),
+                _SheetLabel(l.t('add_product.name_label').toUpperCase()),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _nameCtrl,
                   autofocus: true,
                   style: const TextStyle(color: AppTheme.textPrimary),
-                  decoration: InputDecoration(hintText: l.t('add_product.name_hint') ?? 'örn. Süt, Ekmek...'),
+                  decoration: InputDecoration(hintText: l.t('add_product.name_hint')),
                   validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? l.t('common.error') ?? 'Zorunlu alan' : null,
+                      (v == null || v.trim().isEmpty) ? l.t('common.error') : null,
                 ),
                 const SizedBox(height: 14),
 
@@ -420,7 +418,7 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _SheetLabel((l.t('add_product.qty_label') ?? 'MİKTAR').toUpperCase()),
+                          _SheetLabel(l.t('add_product.qty_label').toUpperCase()),
                           const SizedBox(height: 6),
                           TextFormField(
                             controller: _qtyCtrl,
@@ -437,12 +435,12 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _SheetLabel((l.t('add_product.unit_label') ?? 'BİRİM').toUpperCase()),
+                          _SheetLabel(l.t('add_product.unit_label').toUpperCase()),
                           const SizedBox(height: 6),
                           TextFormField(
                             controller: _unitCtrl,
                             style: const TextStyle(color: AppTheme.textPrimary),
-                            decoration: InputDecoration(hintText: l.t('add_product.unit_hint') ?? 'adet, kg, lt...'),
+                            decoration: InputDecoration(hintText: l.t('add_product.unit_hint')),
                           ),
                         ],
                       ),
@@ -452,7 +450,7 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                 const SizedBox(height: 14),
 
                 // Kategori
-                _SheetLabel((l.t('add_product.category_label') ?? 'KATEGORİ').toUpperCase()),
+                _SheetLabel(l.t('add_product.category_label').toUpperCase()),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -508,7 +506,7 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                         )
                       : ElevatedButton(
                           onPressed: _save,
-                          child: Text(l.t('product.add_item') ?? 'Listeye Ekle'),
+                          child: Text(l.t('product.add_item')),
                         ),
                 ),
               ],
